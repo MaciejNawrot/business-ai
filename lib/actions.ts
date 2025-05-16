@@ -1,21 +1,17 @@
-import { NextResponse } from "next/server";
+"use server";
+
 import OpenAI from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(req: Request) {
+export async function generateImage(prompt: string) {
+  if (!prompt.trim()) {
+    throw new Error("Prompt is required");
+  }
+
   try {
-    const { prompt } = await req.json();
-
-    if (!prompt) {
-      return NextResponse.json(
-        { error: "Prompt is required" },
-        { status: 400 }
-      );
-    }
-
     const response = await openai.images.generate({
       model: "dall-e-3",
       prompt,
@@ -31,12 +27,9 @@ export async function POST(req: Request) {
       throw new Error("No image URL in response");
     }
 
-    return NextResponse.json({ imageUrl });
+    return imageUrl;
   } catch (error) {
     console.error("Error generating image:", error);
-    return NextResponse.json(
-      { error: "Failed to generate image" },
-      { status: 500 }
-    );
+    throw new Error("Failed to generate image");
   }
-} 
+}

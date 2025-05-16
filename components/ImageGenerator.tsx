@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { generateImage } from "@/lib/actions";
 
 export function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const generateImage = async () => {
+  const handleSubmit = async () => {
     if (!prompt.trim()) {
       toast.error("Please enter a prompt");
       return;
@@ -19,20 +20,8 @@ export function ImageGenerator() {
 
     setIsLoading(true);
     try {
-      const response = await fetch("/api/generate-image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate image");
-      }
-
-      const data = await response.json();
-      setImage(data.imageUrl);
+      const imageUrl = await generateImage(prompt);
+      setImage(imageUrl);
       toast.success("Image generated successfully!");
     } catch (error) {
       console.error("Error generating image:", error);
@@ -50,8 +39,13 @@ export function ImageGenerator() {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           className="flex-1"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSubmit();
+            }
+          }}
         />
-        <Button onClick={generateImage} disabled={isLoading}>
+        <Button onClick={handleSubmit} disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -76,4 +70,4 @@ export function ImageGenerator() {
       )}
     </div>
   );
-} 
+}
