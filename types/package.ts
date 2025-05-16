@@ -1,5 +1,3 @@
-import { LucideIcon } from "lucide-react";
-
 export type PackageStatus = "arrived" | "notified" | "picked_up";
 export type PackageIconName = "Package" | "Bell" | "CheckCircle2";
 

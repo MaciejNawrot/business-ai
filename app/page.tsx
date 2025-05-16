@@ -1,9 +1,15 @@
-import { Button } from "@/components/ui/button";
+import { ImageGenerator } from "@/components/ImageGenerator";
 
-export default async function Home() {
+export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <Button>Click me</Button>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">AI Image Generator</h1>
+        <p className="text-muted-foreground">
+          Generate unique images using DALL-E 3
+        </p>
+      </div>
+      <ImageGenerator />
     </div>
   );
 }
