@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
@@ -9,26 +10,24 @@ import { generateImage } from "@/lib/actions";
 
 export function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
-  const [image, setImage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const { mutate, data: image, isPending } = useMutation({
+    mutationFn: generateImage,
+    onSuccess: (imageUrl: string) => {
+      toast.success("Image generated successfully!");
+    },
+    onError: (error: Error) => {
+      console.error("Error generating image:", error);
+      toast.error("Failed to generate image");
+    }
+  });
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!prompt.trim()) {
       toast.error("Please enter a prompt");
       return;
     }
-
-    setIsLoading(true);
-    try {
-      const imageUrl = await generateImage(prompt);
-      setImage(imageUrl);
-      toast.success("Image generated successfully!");
-    } catch (error) {
-      console.error("Error generating image:", error);
-      toast.error("Failed to generate image");
-    } finally {
-      setIsLoading(false);
-    }
+    mutate(prompt);
   };
 
   return (
@@ -45,8 +44,8 @@ export function ImageGenerator() {
             }
           }}
         />
-        <Button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? (
+        <Button onClick={handleSubmit} disabled={isPending}>
+          {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Generating...
