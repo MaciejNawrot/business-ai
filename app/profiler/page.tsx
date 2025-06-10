@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { analyzeBusinessProfile, type BusinessProfile } from "@/lib/actions";
-import { Loader2 } from "lucide-react";
+import { analyzeBusinessProfile } from "@/lib/actions";
+import { Loader2, Download } from "lucide-react";
+import jsPDF from "jspdf";
 
 type FormData = {
   businessName: string;
@@ -85,6 +86,7 @@ export default function ProfilerPage() {
       toast.success("Business profile analyzed successfully!");
     } catch (error) {
       toast.error("Failed to analyze business profile");
+      toast.error(error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -96,15 +98,86 @@ export default function ProfilerPage() {
     setAnalysis(null);
   };
 
+  const downloadPDF = () => {
+    if (!analysis) return;
+
+    const doc = new jsPDF();
+    const margin = 20;
+    const lineHeight = 7;
+    let y = margin;
+    const maxWidth = doc.internal.pageSize.width - (margin * 2);
+
+    // Add title
+    doc.setFontSize(20);
+    doc.text("Business Analysis Report", margin, y);
+    y += lineHeight * 2;
+
+    // Add business info
+    doc.setFontSize(12);
+    doc.text(`Business Name: ${formData.businessName}`, margin, y);
+    y += lineHeight;
+    doc.text(`Industry: ${formData.industry}`, margin, y);
+    y += lineHeight * 2;
+
+    // Add analysis content
+    doc.setFontSize(12);
+    const lines = analysis.split('\n');
+    
+    lines.forEach((line) => {
+      if (line.startsWith('#')) {
+        // Handle headers
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        const headerText = line.replace(/^#+\s*/, '');
+        const splitHeader = doc.splitTextToSize(headerText, maxWidth);
+        doc.text(splitHeader, margin, y);
+        y += lineHeight * (splitHeader.length + 0.5);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+      } else if (line.startsWith('-')) {
+        // Handle bullet points
+        const bulletText = line.replace(/^-\s*/, '');
+        const bulletPoint = `• ${bulletText}`;
+        const splitBullet = doc.splitTextToSize(bulletPoint, maxWidth - 10);
+        doc.text(splitBullet, margin + 5, y);
+        y += lineHeight * splitBullet.length;
+      } else if (line.trim() === '') {
+        // Handle empty lines
+        y += lineHeight;
+      } else {
+        // Handle regular text
+        const splitText = doc.splitTextToSize(line, maxWidth);
+        doc.text(splitText, margin, y);
+        y += lineHeight * splitText.length;
+      }
+
+      // Add new page if needed
+      if (y > doc.internal.pageSize.height - margin) {
+        doc.addPage();
+        y = margin;
+      }
+    });
+
+    // Save the PDF
+    doc.save(`${formData.businessName}-business-analysis.pdf`);
+    toast.success("PDF downloaded successfully!");
+  };
+
   if (analysis) {
     return (
       <div className="container mx-auto py-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl font-bold">Business Analysis</h1>
-            <Button onClick={resetForm} variant="outline">
-              Start New Analysis
-            </Button>
+            <div className="flex gap-4">
+              <Button onClick={downloadPDF} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+              </Button>
+              <Button onClick={resetForm} variant="outline">
+                Start New Analysis
+              </Button>
+            </div>
           </div>
           <Card>
             <CardContent className="pt-6">
