@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   Home,
   Settings,
+  LineChart,
 } from "lucide-react";
 
 const routes = [
@@ -13,6 +14,11 @@ const routes = [
     title: "Dashboard",
     href: "/",
     icon: Home,
+  },
+  {
+    title: "Business Profiler",
+    href: "/profiler",
+    icon: LineChart,
   },
   {
     title: "Settings",
