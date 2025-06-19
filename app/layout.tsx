@@ -9,8 +9,8 @@ import { Providers } from "@/components/Providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Quattro",
-  description: "Package management system.",
+  title: "AI business tools",
+  description: "A collection of AI tools for business",
 };
 
 export default function RootLayout({
