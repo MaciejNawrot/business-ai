@@ -8,13 +8,6 @@ const openai = new OpenAI({
 
 export type ImageFormat = "1:1" | "16:9" | "4:5" | "9:16";
 
-const formatToSize: Record<ImageFormat, { width: number; height: number }> = {
-  "1:1": { width: 1024, height: 1024 },
-  "16:9": { width: 1792, height: 1024 },
-  "4:5": { width: 1024, height: 1280 },
-  "9:16": { width: 1024, height: 1792 },
-};
-
 export async function generateImage(
   prompt: string,
   companyDescription: string,
@@ -28,7 +21,6 @@ export async function generateImage(
     throw new Error("Company description is required");
   }
 
-  const { width, height } = formatToSize[format];
   const fullPrompt = `${companyDescription}\n\n${prompt}`;
 
   // Map our format sizes to DALL-E 3 supported sizes

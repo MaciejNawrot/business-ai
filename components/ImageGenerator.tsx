@@ -23,7 +23,7 @@ export function ImageGenerator() {
   
   const { mutate, data: image, isPending } = useMutation({
     mutationFn: (prompt: string) => generateImage(prompt, companyDescription, format),
-    onSuccess: (imageUrl) => {
+    onSuccess: () => {
       toast.success("Image generated successfully!");
     },
     onError: (error: Error) => {
