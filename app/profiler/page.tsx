@@ -10,7 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { analyzeBusinessProfile } from "@/lib/actions";
 import { Loader2, Download } from "lucide-react";
-import jsPDF from "jspdf";
+import { generateBusinessAnalysisPDF } from "@/utils/pdf";
+import { formatAnalysisText } from "@/utils/text";
+import { BUSINESS_PROFILER_MOCK } from "@/utils/mocks";
+
+const USE_MOCK_DATA = false;
+const mockAnalysisData = BUSINESS_PROFILER_MOCK;
 
 type FormData = {
   businessName: string;
@@ -80,10 +85,19 @@ export default function ProfilerPage() {
 
   const handleSubmit = async () => {
     setIsLoading(true);
+
+    if (USE_MOCK_DATA) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Mock analysis generated successfully!");
+      setAnalysis(mockAnalysisData);
+      return;
+    }
+
     try {
       const result = await analyzeBusinessProfile(formData);
-      setAnalysis(result);
+      console.log(result)
       toast.success("Business profile analyzed successfully!");
+      setAnalysis(result);
     } catch (error) {
       toast.error("Failed to analyze business profile");
       toast.error(error instanceof Error ? error.message : "An unexpected error occurred");
@@ -100,67 +114,14 @@ export default function ProfilerPage() {
 
   const downloadPDF = () => {
     if (!analysis) return;
-
-    const doc = new jsPDF();
-    const margin = 20;
-    const lineHeight = 7;
-    let y = margin;
-    const maxWidth = doc.internal.pageSize.width - (margin * 2);
-
-    // Add title
-    doc.setFontSize(20);
-    doc.text("Business Analysis Report", margin, y);
-    y += lineHeight * 2;
-
-    // Add business info
-    doc.setFontSize(12);
-    doc.text(`Business Name: ${formData.businessName}`, margin, y);
-    y += lineHeight;
-    doc.text(`Industry: ${formData.industry}`, margin, y);
-    y += lineHeight * 2;
-
-    // Add analysis content
-    doc.setFontSize(12);
-    const lines = analysis.split('\n');
     
-    lines.forEach((line) => {
-      if (line.startsWith('#')) {
-        // Handle headers
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        const headerText = line.replace(/^#+\s*/, '');
-        const splitHeader = doc.splitTextToSize(headerText, maxWidth);
-        doc.text(splitHeader, margin, y);
-        y += lineHeight * (splitHeader.length + 0.5);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-      } else if (line.startsWith('-')) {
-        // Handle bullet points
-        const bulletText = line.replace(/^-\s*/, '');
-        const bulletPoint = `• ${bulletText}`;
-        const splitBullet = doc.splitTextToSize(bulletPoint, maxWidth - 10);
-        doc.text(splitBullet, margin + 5, y);
-        y += lineHeight * splitBullet.length;
-      } else if (line.trim() === '') {
-        // Handle empty lines
-        y += lineHeight;
-      } else {
-        // Handle regular text
-        const splitText = doc.splitTextToSize(line, maxWidth);
-        doc.text(splitText, margin, y);
-        y += lineHeight * splitText.length;
-      }
-
-      // Add new page if needed
-      if (y > doc.internal.pageSize.height - margin) {
-        doc.addPage();
-        y = margin;
-      }
-    });
-
-    // Save the PDF
-    doc.save(`${formData.businessName}-business-analysis.pdf`);
-    toast.success("PDF downloaded successfully!");
+    try {
+      generateBusinessAnalysisPDF(analysis, formData);
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      toast.error("Failed to download PDF");
+      console.log(error);
+    }
   };
 
   if (analysis) {
@@ -182,18 +143,7 @@ export default function ProfilerPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                {analysis.split('\n').map((line, index) => {
-                  if (line.startsWith('#')) {
-                    return <h2 key={index} className="text-2xl font-bold mt-6 mb-4">{line.replace(/^#+\s*/, '')}</h2>;
-                  }
-                  if (line.startsWith('-')) {
-                    return <li key={index} className="ml-4">{line.replace(/^-\s*/, '')}</li>;
-                  }
-                  if (line.trim() === '') {
-                    return <br key={index} />;
-                  }
-                  return <p key={index} className="mb-4">{line}</p>;
-                })}
+                {formatAnalysisText(analysis)}
               </div>
             </CardContent>
           </Card>
